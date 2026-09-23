@@ -2,37 +2,34 @@
 // CONFIGURAÇÕES
 // ======================================================
 
-// ------------------------------------------------------
 // URL DA ABA DE REVENDAS
-// ------------------------------------------------------
-
 const URL_REVENDA =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnU51Kz93Aij3mNKNvOmzEI_z50xQSWvuf-09_J-UDucrpOwpfLEkdNkegnyO8vJ5VeSmXYRx_JyxL/pub?output=csv";
 
-
-// ------------------------------------------------------
 // URL DA ABA REPRESENTANTES_CONSUMO
-// ------------------------------------------------------
-
 const URL_REPRESENTANTES =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnU51Kz93Aij3mNKNvOmzEI_z50xQSWvuf-09_J-UDucrpOwpfLEkdNkegnyO8vJ5VeSmXYRx_JyxL/pub?gid=620527169&single=true&output=csv";
 
+// ======================================================
+// URL DO GOOGLE APPS SCRIPT - CAPTURA DE LEADS
+// ======================================================
 
-// ------------------------------------------------------
+const URL_LEADS =
+    "https://script.google.com/macros/s/AKfycby1ETMZOdPfmGSTYtm0uCtz0rHx2chmsNYxl7y9fDcg5DeKbRGpxTUfJVro87Mv2FfG/exec";
+
+// ======================================================
 // WHATSAPP DA FQ4
-// ------------------------------------------------------
+// ======================================================
 
 const WHATSAPP_FABRICA =
     "5519994712833";
 
-
-// ------------------------------------------------------
+// ======================================================
 // MERCADO LIVRE
-// ------------------------------------------------------
+// ======================================================
 
 const URL_MERCADO_LIVRE =
     "https://lista.mercadolivre.com.br/fq4-flex-diesel";
-
 
 // ======================================================
 // ELEMENTOS DA PÁGINA
@@ -46,7 +43,6 @@ const cidadeSelect =
 
 const resultado =
     document.getElementById("resultado");
-
 
 // ======================================================
 // ESTADOS BRASILEIROS
@@ -84,16 +80,10 @@ const estados = [
 
 ];
 
-
-// ======================================================
-// CIDADES
-// ======================================================
-
 let cidades = {};
 
-
 // ======================================================
-// NORMALIZA TEXTO
+// NORMALIZAÇÃO
 // ======================================================
 
 function normalizar(texto) {
@@ -108,35 +98,30 @@ function normalizar(texto) {
 
 }
 
-
 // ======================================================
-// CARREGA ESTADOS
+// CARREGAR ESTADOS
 // ======================================================
 
 function carregarEstados() {
 
-    estados.forEach(
-        ([sigla, nome]) => {
+    estados.forEach(([sigla, nome]) => {
 
-            const option =
-                document.createElement("option");
+        const option =
+            document.createElement("option");
 
-            option.value =
-                sigla;
+        option.value = sigla;
 
-            option.textContent =
-                `${nome} (${sigla})`;
+        option.textContent =
+            `${nome} (${sigla})`;
 
-            estadoSelect.appendChild(option);
+        estadoSelect.appendChild(option);
 
-        }
-    );
+    });
 
 }
 
-
 // ======================================================
-// CARREGA CIDADES PELO IBGE
+// CARREGAR CIDADES
 // ======================================================
 
 async function carregarCidades(uf) {
@@ -144,9 +129,7 @@ async function carregarCidades(uf) {
     cidadeSelect.innerHTML =
         '<option value="">Carregando cidades...</option>';
 
-    cidadeSelect.disabled =
-        true;
-
+    cidadeSelect.disabled = true;
 
     if (cidades[uf]) {
 
@@ -158,14 +141,12 @@ async function carregarCidades(uf) {
 
     }
 
-
     try {
 
         const resposta =
             await fetch(
                 `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`
             );
-
 
         if (!resposta.ok) {
 
@@ -175,16 +156,12 @@ async function carregarCidades(uf) {
 
         }
 
-
         const dados =
             await resposta.json();
 
-
         cidades[uf] =
             dados
-                .map(
-                    item => item.nome
-                )
+                .map(item => item.nome)
                 .sort(
                     (a, b) =>
                         a.localeCompare(
@@ -193,11 +170,9 @@ async function carregarCidades(uf) {
                         )
                 );
 
-
         preencherCidades(
             cidades[uf]
         );
-
 
     } catch (erro) {
 
@@ -206,20 +181,17 @@ async function carregarCidades(uf) {
             erro
         );
 
-
         cidadeSelect.innerHTML =
             '<option value="">Erro ao carregar cidades</option>';
 
-        cidadeSelect.disabled =
-            true;
+        cidadeSelect.disabled = true;
 
     }
 
 }
 
-
 // ======================================================
-// PREENCHE CIDADES
+// PREENCHER CIDADES
 // ======================================================
 
 function preencherCidades(lista) {
@@ -227,50 +199,39 @@ function preencherCidades(lista) {
     cidadeSelect.innerHTML =
         '<option value="">Selecione sua cidade</option>';
 
+    lista.forEach(cidade => {
 
-    lista.forEach(
-        cidade => {
+        const option =
+            document.createElement("option");
 
-            const option =
-                document.createElement("option");
+        option.value = cidade;
 
-            option.value =
-                cidade;
+        option.textContent = cidade;
 
-            option.textContent =
-                cidade;
+        cidadeSelect.appendChild(
+            option
+        );
 
-            cidadeSelect.appendChild(
-                option
-            );
+    });
 
-        }
-    );
-
-
-    cidadeSelect.disabled =
-        false;
+    cidadeSelect.disabled = false;
 
 }
 
-
 // ======================================================
-// ALTERAÇÃO DO ESTADO
+// EVENTO ESTADO
 // ======================================================
 
 estadoSelect.addEventListener(
     "change",
     async function() {
 
-        resultado.innerHTML =
-            "";
+        resultado.innerHTML = "";
 
         cidadeSelect.innerHTML =
             '<option value="">Selecione sua cidade</option>';
 
-        cidadeSelect.disabled =
-            true;
-
+        cidadeSelect.disabled = true;
 
         if (!this.value) {
 
@@ -281,7 +242,6 @@ estadoSelect.addEventListener(
 
         }
 
-
         await carregarCidades(
             this.value
         );
@@ -289,9 +249,8 @@ estadoSelect.addEventListener(
     }
 );
 
-
 // ======================================================
-// LEITOR CSV
+// LEITURA DE CSV
 // ======================================================
 
 function parseCSV(texto) {
@@ -303,7 +262,6 @@ function parseCSV(texto) {
     let campo = "";
 
     let dentroAspas = false;
-
 
     for (
         let i = 0;
@@ -317,7 +275,6 @@ function parseCSV(texto) {
         const proximo =
             texto[i + 1];
 
-
         if (
             caractere === '"' &&
             dentroAspas &&
@@ -328,16 +285,18 @@ function parseCSV(texto) {
 
             i++;
 
+        }
 
-        } else if (
+        else if (
             caractere === '"'
         ) {
 
             dentroAspas =
                 !dentroAspas;
 
+        }
 
-        } else if (
+        else if (
             caractere === "," &&
             !dentroAspas
         ) {
@@ -348,13 +307,13 @@ function parseCSV(texto) {
 
             campo = "";
 
+        }
 
-        } else if (
+        else if (
             (
                 caractere === "\n" ||
                 caractere === "\r"
-            )
-            &&
+            ) &&
             !dentroAspas
         ) {
 
@@ -367,13 +326,11 @@ function parseCSV(texto) {
 
             }
 
-
             linha.push(
                 campo
             );
 
             campo = "";
-
 
             if (
                 linha.some(
@@ -388,18 +345,17 @@ function parseCSV(texto) {
 
             }
 
-
             linha = [];
 
+        }
 
-        } else {
+        else {
 
             campo += caractere;
 
         }
 
     }
-
 
     if (
         campo !== "" ||
@@ -409,7 +365,6 @@ function parseCSV(texto) {
         linha.push(
             campo
         );
-
 
         if (
             linha.some(
@@ -426,14 +381,12 @@ function parseCSV(texto) {
 
     }
 
-
     return linhas;
 
 }
 
-
 // ======================================================
-// CONVERTE CSV EM OBJETOS
+// CONVERTER CSV
 // ======================================================
 
 function converterCSV(texto) {
@@ -441,15 +394,11 @@ function converterCSV(texto) {
     const linhas =
         parseCSV(texto);
 
-
-    if (
-        !linhas.length
-    ) {
+    if (!linhas.length) {
 
         return [];
 
     }
-
 
     const cabecalho =
         linhas[0].map(
@@ -457,47 +406,40 @@ function converterCSV(texto) {
                 normalizar(coluna)
         );
 
-
     console.log(
         "CABEÇALHO ENCONTRADO:",
         cabecalho
     );
 
-
     return linhas
         .slice(1)
-        .map(
-            linha => {
+        .map(linha => {
 
-                const registro = {};
+            const registro = {};
 
+            cabecalho.forEach(
+                (
+                    coluna,
+                    indice
+                ) => {
 
-                cabecalho.forEach(
-                    (
-                        coluna,
-                        indice
-                    ) => {
+                    registro[coluna] =
+                        (
+                            linha[indice] ||
+                            ""
+                        ).trim();
 
-                        registro[coluna] =
-                            (
-                                linha[indice] ||
-                                ""
-                            ).trim();
+                }
+            );
 
-                    }
-                );
+            return registro;
 
-
-                return registro;
-
-            }
-        );
+        });
 
 }
 
-
 // ======================================================
-// CARREGA UMA URL CSV
+// CARREGAR CSV
 // ======================================================
 
 async function carregarCSV(url) {
@@ -509,7 +451,6 @@ async function carregarCSV(url) {
                 `${url}&_=${Date.now()}`
             );
 
-
         if (!resposta.ok) {
 
             throw new Error(
@@ -518,10 +459,8 @@ async function carregarCSV(url) {
 
         }
 
-
         const texto =
             await resposta.text();
-
 
         console.log(
             "CSV CARREGADO:",
@@ -531,19 +470,18 @@ async function carregarCSV(url) {
             )
         );
 
-
         return converterCSV(
             texto
         );
 
+    }
 
-    } catch (erro) {
+    catch (erro) {
 
         console.error(
             "ERRO AO CARREGAR CSV:",
             erro
         );
-
 
         return [];
 
@@ -551,9 +489,8 @@ async function carregarCSV(url) {
 
 }
 
-
 // ======================================================
-// LOCALIZA UM CAMPO
+// LOCALIZAR CAMPO
 // ======================================================
 
 function campo(
@@ -568,7 +505,6 @@ function campo(
         const chave =
             normalizar(nome);
 
-
         if (
             Object.prototype.hasOwnProperty.call(
                 registro,
@@ -582,14 +518,12 @@ function campo(
 
     }
 
-
     return "";
 
 }
 
-
 // ======================================================
-// VERIFICA ESTADO
+// VERIFICAR ESTADO
 // ======================================================
 
 function estadoCorresponde(
@@ -600,13 +534,11 @@ function estadoCorresponde(
     const valorNormalizado =
         normalizar(valor);
 
-
     const estado =
         estados.find(
             item =>
                 item[0] === uf
         );
-
 
     if (!estado) {
 
@@ -614,18 +546,15 @@ function estadoCorresponde(
 
     }
 
-
     const sigla =
         normalizar(
             estado[0]
         );
 
-
     const nome =
         normalizar(
             estado[1]
         );
-
 
     return (
         valorNormalizado === sigla ||
@@ -634,9 +563,8 @@ function estadoCorresponde(
 
 }
 
-
 // ======================================================
-// BUSCA REVENDA
+// BUSCAR REVENDA
 // ======================================================
 
 async function buscarRevenda(
@@ -648,12 +576,10 @@ async function buscarRevenda(
         "BUSCANDO REVENDA..."
     );
 
-
     const registros =
         await carregarCSV(
             URL_REVENDA
         );
-
 
     const encontrados =
         registros.filter(
@@ -665,7 +591,6 @@ async function buscarRevenda(
                         ["STATUS"]
                     );
 
-
                 const estadoPlanilha =
                     campo(
                         registro,
@@ -674,7 +599,6 @@ async function buscarRevenda(
                             "UF"
                         ]
                     );
-
 
                 const cidadePlanilha =
                     campo(
@@ -685,7 +609,6 @@ async function buscarRevenda(
                             "MUNICÍPIO"
                         ]
                     );
-
 
                 return (
 
@@ -713,20 +636,17 @@ async function buscarRevenda(
             }
         );
 
-
     console.log(
         "REVENDAS ENCONTRADAS:",
         encontrados
     );
 
-
     return encontrados;
 
 }
 
-
 // ======================================================
-// MOSTRA REVENDA
+// MOSTRAR REVENDAS
 // ======================================================
 
 function mostrarRevendas(
@@ -748,7 +668,6 @@ function mostrarRevendas(
 
     `;
 
-
     revendas.forEach(
         revenda => {
 
@@ -759,10 +678,8 @@ function mostrarRevendas(
                         "REVENDA",
                         "NOME DA REVENDA"
                     ]
-                )
-                ||
+                ) ||
                 "Revenda FQ4";
-
 
             const endereco =
                 campo(
@@ -772,10 +689,8 @@ function mostrarRevendas(
                         "ENDERECO",
                         "ENDEREÇO DA REVENDA"
                     ]
-                )
-                ||
+                ) ||
                 "Endereço não informado";
-
 
             const telefone =
                 campo(
@@ -786,24 +701,18 @@ function mostrarRevendas(
                         "WHATSAPP",
                         "CELULAR"
                     ]
-                )
-                ||
+                ) ||
                 "Telefone não informado";
-
 
             let numero =
                 String(
                     telefone
-                )
-                .replace(
+                ).replace(
                     /\D/g,
                     ""
                 );
 
-
-            let whatsapp =
-                "";
-
+            let whatsapp = "";
 
             if (numero) {
 
@@ -814,7 +723,9 @@ function mostrarRevendas(
                     whatsapp =
                         `https://wa.me/${numero}`;
 
-                } else {
+                }
+
+                else {
 
                     whatsapp =
                         `https://wa.me/55${numero}`;
@@ -823,7 +734,6 @@ function mostrarRevendas(
 
             }
 
-
             html += `
 
                 <div class="revenda-card">
@@ -831,7 +741,6 @@ function mostrarRevendas(
                     <h3>
                         ${nome}
                     </h3>
-
 
                     <div class="info-revenda">
 
@@ -845,7 +754,6 @@ function mostrarRevendas(
 
                     </div>
 
-
                     <div class="info-revenda">
 
                         <strong>
@@ -858,22 +766,21 @@ function mostrarRevendas(
 
                     </div>
 
-
                     ${
                         whatsapp
-                        ?
+                        ? `
+
+                            <a
+                                class="botao botao-whatsapp"
+                                href="${whatsapp}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                FALAR COM A REVENDA NO WHATSAPP
+                            </a>
+
                         `
-                        <a
-                            class="botao botao-whatsapp"
-                            href="${whatsapp}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            FALAR COM A REVENDA NO WHATSAPP
-                        </a>
-                        `
-                        :
-                        ""
+                        : ""
                     }
 
                 </div>
@@ -883,77 +790,135 @@ function mostrarRevendas(
         }
     );
 
-
     html += `
-
         </div>
-
     `;
-
 
     resultado.innerHTML =
         html;
 
 }
 
-
 // ======================================================
-// BUSCA REPRESENTANTE
+// BUSCAR REPRESENTANTE
 // ======================================================
 
-async function buscarRepresentante(estado) {
+async function buscarRepresentante(
+    estado
+) {
 
-    console.log("=================================");
-    console.log("BUSCANDO REPRESENTANTE");
-    console.log("ESTADO SELECIONADO:", estado);
-    console.log("URL REPRESENTANTES:", URL_REPRESENTANTES);
-    console.log("=================================");
+    console.log(
+        "================================="
+    );
+
+    console.log(
+        "BUSCANDO REPRESENTANTE"
+    );
+
+    console.log(
+        "ESTADO SELECIONADO:",
+        estado
+    );
+
+    console.log(
+        "URL REPRESENTANTES:",
+        URL_REPRESENTANTES
+    );
+
+    console.log(
+        "================================="
+    );
 
     try {
 
-        const resposta = await fetch(
-            URL_REPRESENTANTES + "&_=" + Date.now()
+        const resposta =
+            await fetch(
+                URL_REPRESENTANTES +
+                "&_=" +
+                Date.now()
+            );
+
+        console.log(
+            "STATUS DA RESPOSTA:",
+            resposta.status
         );
 
-        console.log("STATUS DA RESPOSTA:", resposta.status);
-        console.log("RESPOSTA OK?:", resposta.ok);
+        console.log(
+            "RESPOSTA OK?:",
+            resposta.ok
+        );
 
-        const texto = await resposta.text();
+        const texto =
+            await resposta.text();
 
-        console.log("CSV RECEBIDO:");
-        console.log(texto);
+        console.log(
+            "CSV RECEBIDO:"
+        );
 
-        const registros = converterCSV(texto);
+        console.log(
+            texto
+        );
 
-        console.log("REGISTROS CONVERTIDOS:", registros);
-        console.log("TOTAL DE REPRESENTANTES:", registros.length);
-
-        const encontrados = registros.filter(registro => {
-
-            const status = campo(registro, ["STATUS"]);
-
-            const estadoPlanilha = campo(registro, [
-                "ESTADO",
-                "UF"
-            ]);
-
-            console.log(
-                "ANALISANDO:",
-                registro,
-                "STATUS:",
-                status,
-                "ESTADO:",
-                estadoPlanilha
+        const registros =
+            converterCSV(
+                texto
             );
 
-            return (
-                normalizar(status) === "ATIVO" &&
-                estadoCorresponde(
-                    estadoPlanilha,
-                    estado
-                )
+        console.log(
+            "REGISTROS CONVERTIDOS:",
+            registros
+        );
+
+        console.log(
+            "TOTAL DE REPRESENTANTES:",
+            registros.length
+        );
+
+        const encontrados =
+            registros.filter(
+                registro => {
+
+                    const status =
+                        campo(
+                            registro,
+                            ["STATUS"]
+                        );
+
+                    const estadoPlanilha =
+                        campo(
+                            registro,
+                            [
+                                "ESTADO",
+                                "UF"
+                            ]
+                        );
+
+                    console.log(
+                        "ANALISANDO:",
+                        registro,
+                        "STATUS:",
+                        status,
+                        "ESTADO:",
+                        estadoPlanilha
+                    );
+
+                    return (
+
+                        normalizar(
+                            status
+                        ) === "ATIVO"
+
+                        &&
+
+                        estadoCorresponde(
+                            estadoPlanilha,
+                            estado
+                        )
+
+                    );
+
+                }
             );
-        });
 
         console.log(
             "================================="
@@ -975,7 +940,9 @@ async function buscarRepresentante(estado) {
 
         return encontrados;
 
-    } catch (erro) {
+    }
+
+    catch (erro) {
 
         console.error(
             "ERRO AO BUSCAR REPRESENTANTE:",
@@ -983,10 +950,101 @@ async function buscarRepresentante(estado) {
         );
 
         return [];
+
     }
+
 }
+
 // ======================================================
-// MOSTRA REPRESENTANTE
+// REGISTRAR LEAD
+// ======================================================
+
+async function registrarLead(
+    dados
+) {
+
+    try {
+
+        const formulario =
+            new URLSearchParams();
+
+        formulario.append(
+            "estado",
+            dados.estado || ""
+        );
+
+        formulario.append(
+            "cidade",
+            dados.cidade || ""
+        );
+
+        formulario.append(
+            "consumo",
+            dados.consumo || ""
+        );
+
+        formulario.append(
+            "faixa",
+            dados.faixa || ""
+        );
+
+        formulario.append(
+            "destino",
+            dados.destino || ""
+        );
+
+        formulario.append(
+            "atendimento",
+            dados.atendimento || ""
+        );
+
+        await fetch(
+            URL_LEADS,
+            {
+
+                method: "POST",
+
+                mode: "no-cors",
+
+                headers: {
+                    "Content-Type":
+                        "application/x-www-form-urlencoded"
+                },
+
+                body:
+                    formulario.toString()
+
+            }
+        );
+
+        console.log(
+            "================================="
+        );
+
+        console.log(
+            "LEAD REGISTRADO:",
+            dados
+        );
+
+        console.log(
+            "================================="
+        );
+
+    }
+
+    catch (erro) {
+
+        console.error(
+            "ERRO AO REGISTRAR LEAD:",
+            erro
+        );
+
+    }
+
+}
+
+// ======================================================
+// MOSTRAR REPRESENTANTE
 // ======================================================
 
 function mostrarRepresentante(
@@ -1003,7 +1061,6 @@ function mostrarRepresentante(
             ]
         );
 
-
     const telefone =
         campo(
             representante,
@@ -1013,16 +1070,13 @@ function mostrarRepresentante(
             ]
         );
 
-
     let numero =
         String(
             telefone
-        )
-        .replace(
+        ).replace(
             /\D/g,
             ""
         );
-
 
     if (!numero) {
 
@@ -1035,16 +1089,15 @@ function mostrarRepresentante(
 
     }
 
-
     if (
         !numero.startsWith("55")
     ) {
 
         numero =
-            "55" + numero;
+            "55" +
+            numero;
 
     }
-
 
     const mensagem =
         `Olá! Vim pelo site da FQ4.
@@ -1056,10 +1109,10 @@ Cidade: ${cidade}
 
 Gostaria de falar sobre a compra de FQ4 para minha operação.`;
 
-
     const whatsapp =
-        `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
-
+        `https://wa.me/${numero}?text=${encodeURIComponent(
+            mensagem
+        )}`;
 
     resultado.innerHTML = `
 
@@ -1069,23 +1122,19 @@ Gostaria de falar sobre a compra de FQ4 para minha operação.`;
                 Atendimento FQ4 para grandes consumidores
             </h2>
 
-
             <p>
                 Identificamos um representante
                 que atende o seu estado.
             </p>
 
-
             <h3>
                 ${nome}
             </h3>
-
 
             <p>
                 Para continuar seu atendimento,
                 fale diretamente com o representante.
             </p>
-
 
             <a
                 class="botao botao-whatsapp"
@@ -1102,9 +1151,8 @@ Gostaria de falar sobre a compra de FQ4 para minha operação.`;
 
 }
 
-
 // ======================================================
-// MOSTRA FÁBRICA
+// MOSTRAR FÁBRICA
 // ======================================================
 
 function mostrarFabrica(
@@ -1122,10 +1170,10 @@ Cidade: ${cidade}
 
 Gostaria de receber informações sobre o atendimento direto pela FQ4.`;
 
-
     const whatsapp =
-        `https://wa.me/${WHATSAPP_FABRICA}?text=${encodeURIComponent(mensagem)}`;
-
+        `https://wa.me/${WHATSAPP_FABRICA}?text=${encodeURIComponent(
+            mensagem
+        )}`;
 
     resultado.innerHTML = `
 
@@ -1135,19 +1183,16 @@ Gostaria de receber informações sobre o atendimento direto pela FQ4.`;
                 Atendimento direto FQ4
             </h2>
 
-
             <p>
                 Seu consumo tem potencial para
                 atendimento comercial direto.
             </p>
-
 
             <p>
                 No momento, não identificamos
                 um representante cadastrado
                 para o seu estado.
             </p>
-
 
             <a
                 class="botao botao-whatsapp"
@@ -1164,9 +1209,8 @@ Gostaria de receber informações sobre o atendimento direto pela FQ4.`;
 
 }
 
-
 // ======================================================
-// MERCADO LIVRE
+// MOSTRAR MERCADO LIVRE
 // ======================================================
 
 function mostrarMercadoLivre() {
@@ -1180,23 +1224,19 @@ function mostrarMercadoLivre() {
                 cadastrada nesta cidade.
             </h2>
 
-
             <p>
                 Você pode pesquisar produtos FQ4
                 disponíveis para sua região
                 no Mercado Livre.
             </p>
 
-
             <p>
                 Pesquise por:
             </p>
 
-
             <h3>
                 FQ4 FLEX/DIESEL
             </h3>
-
 
             <a
                 class="botao botao-mercado"
@@ -1213,7 +1253,6 @@ function mostrarMercadoLivre() {
 
 }
 
-
 // ======================================================
 // BOTÕES DE CONSUMO
 // ======================================================
@@ -1225,27 +1264,18 @@ document
     .forEach(
         botao => {
 
-
             botao.addEventListener(
                 "click",
                 async function() {
 
-
                     const consumo =
                         this.dataset.consumo;
-
 
                     const estado =
                         estadoSelect.value;
 
-
                     const cidade =
                         cidadeSelect.value;
-
-
-                    // ------------------------------------------
-                    // VALIDA ESTADO
-                    // ------------------------------------------
 
                     if (!estado) {
 
@@ -1257,11 +1287,6 @@ document
 
                     }
 
-
-                    // ------------------------------------------
-                    // VALIDA CIDADE
-                    // ------------------------------------------
-
                     if (!cidade) {
 
                         alert(
@@ -1271,11 +1296,6 @@ document
                         return;
 
                     }
-
-
-                    // ------------------------------------------
-                    // CARREGANDO
-                    // ------------------------------------------
 
                     resultado.innerHTML = `
 
@@ -1294,33 +1314,88 @@ document
 
                     `;
 
-
-                    // ==================================================
+                    // ==========================================
                     // MAIS DE 2.000 LITROS
-                    // ==================================================
+                    // ==========================================
 
                     if (
                         consumo === "mais"
                     ) {
-
 
                         const representantes =
                             await buscarRepresentante(
                                 estado
                             );
 
-
                         if (
                             representantes.length > 0
                         ) {
 
+                            const representante =
+                                representantes[0];
+
+                            const nomeRepresentante =
+                                campo(
+                                    representante,
+                                    [
+                                        "REPRESENTANTE"
+                                    ]
+                                );
+
+                            await registrarLead({
+
+                                estado:
+                                    estado,
+
+                                cidade:
+                                    cidade,
+
+                                consumo:
+                                    "Mais de 2.000 litros/mês",
+
+                                faixa:
+                                    "> 2.000 L/mês",
+
+                                destino:
+                                    "REPRESENTANTE",
+
+                                atendimento:
+                                    nomeRepresentante ||
+                                    "Representante FQ4"
+
+                            });
+
                             mostrarRepresentante(
-                                representantes[0],
+                                representante,
                                 estado,
                                 cidade
                             );
 
-                        } else {
+                        }
+
+                        else {
+
+                            await registrarLead({
+
+                                estado:
+                                    estado,
+
+                                cidade:
+                                    cidade,
+
+                                consumo:
+                                    "Mais de 2.000 litros/mês",
+
+                                faixa:
+                                    "> 2.000 L/mês",
+
+                                destino:
+                                    "FQ4",
+
+                                atendimento:
+                                    "Fábrica / Comercial FQ4"
+
+                            });
 
                             mostrarFabrica(
                                 estado,
@@ -1329,15 +1404,13 @@ document
 
                         }
 
-
                         return;
 
                     }
 
-
-                    // ==================================================
+                    // ==========================================
                     // ATÉ 2.000 LITROS
-                    // ==================================================
+                    // ==========================================
 
                     const revendas =
                         await buscarRevenda(
@@ -1345,28 +1418,84 @@ document
                             cidade
                         );
 
-
                     if (
                         revendas.length > 0
                     ) {
+
+                        const primeiraRevenda =
+                            revendas[0];
+
+                        const nomeRevenda =
+                            campo(
+                                primeiraRevenda,
+                                [
+                                    "REVENDA",
+                                    "NOME DA REVENDA"
+                                ]
+                            );
+
+                        await registrarLead({
+
+                            estado:
+                                estado,
+
+                            cidade:
+                                cidade,
+
+                            consumo:
+                                consumo,
+
+                            faixa:
+                                "Até 2.000 L/mês",
+
+                            destino:
+                                "REVENDA",
+
+                            atendimento:
+                                nomeRevenda ||
+                                "Revenda FQ4"
+
+                        });
 
                         mostrarRevendas(
                             revendas
                         );
 
-                    } else {
+                    }
+
+                    else {
+
+                        await registrarLead({
+
+                            estado:
+                                estado,
+
+                            cidade:
+                                cidade,
+
+                            consumo:
+                                consumo,
+
+                            faixa:
+                                "Até 2.000 L/mês",
+
+                            destino:
+                                "MERCADO LIVRE",
+
+                            atendimento:
+                                "Sem revenda cadastrada"
+
+                        });
 
                         mostrarMercadoLivre();
 
                     }
 
                 }
-
             );
 
         }
     );
-
 
 // ======================================================
 // INICIALIZAÇÃO
