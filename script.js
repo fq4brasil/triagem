@@ -2,18 +2,40 @@
 // CONFIGURAÇÕES
 // ======================================================
 
-const URL_PLANILHA =
+// ------------------------------------------------------
+// URL DA ABA DE REVENDAS
+// ------------------------------------------------------
+
+const URL_REVENDA =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnU51Kz93Aij3mNKNvOmzEI_z50xQSWvuf-09_J-UDucrpOwpfLEkdNkegnyO8vJ5VeSmXYRx_JyxL/pub?output=csv";
+
+
+// ------------------------------------------------------
+// URL DA ABA REPRESENTANTES_CONSUMO
+// ------------------------------------------------------
+
+const URL_REPRESENTANTES =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnU51Kz93Aij3mNKNvOmzEI_z50xQSWvuf-09_J-UDucrpOwpfLEkdNkegnyO8vJ5VeSmXYRx_JyxL/pub?gid=620527169&single=true&output=csv";
+
+
+// ------------------------------------------------------
+// WHATSAPP DA FQ4
+// ------------------------------------------------------
 
 const WHATSAPP_FABRICA =
     "5519994712833";
+
+
+// ------------------------------------------------------
+// MERCADO LIVRE
+// ------------------------------------------------------
 
 const URL_MERCADO_LIVRE =
     "https://lista.mercadolivre.com.br/fq4-flex-diesel";
 
 
 // ======================================================
-// ELEMENTOS
+// ELEMENTOS DA PÁGINA
 // ======================================================
 
 const estadoSelect =
@@ -27,7 +49,7 @@ const resultado =
 
 
 // ======================================================
-// ESTADOS
+// ESTADOS BRASILEIROS
 // ======================================================
 
 const estados = [
@@ -114,7 +136,7 @@ function carregarEstados() {
 
 
 // ======================================================
-// CARREGA CIDADES DO IBGE
+// CARREGA CIDADES PELO IBGE
 // ======================================================
 
 async function carregarCidades(uf) {
@@ -148,7 +170,7 @@ async function carregarCidades(uf) {
         if (!resposta.ok) {
 
             throw new Error(
-                "Erro ao consultar IBGE."
+                "Erro ao consultar cidades."
             );
 
         }
@@ -414,7 +436,7 @@ function parseCSV(texto) {
 // CONVERTE CSV EM OBJETOS
 // ======================================================
 
-function converterCSVParaObjetos(texto) {
+function converterCSV(texto) {
 
     const linhas =
         parseCSV(texto);
@@ -434,6 +456,12 @@ function converterCSVParaObjetos(texto) {
             coluna =>
                 normalizar(coluna)
         );
+
+
+    console.log(
+        "CABEÇALHO ENCONTRADO:",
+        cabecalho
+    );
 
 
     return linhas
@@ -469,52 +497,16 @@ function converterCSVParaObjetos(texto) {
 
 
 // ======================================================
-// LOCALIZA COLUNA
+// CARREGA UMA URL CSV
 // ======================================================
 
-function pegarCampo(
-    registro,
-    possibilidades
-) {
-
-    for (
-        const campo of possibilidades
-    ) {
-
-        const chave =
-            normalizar(campo);
-
-
-        if (
-            Object.prototype.hasOwnProperty.call(
-                registro,
-                chave
-            )
-        ) {
-
-            return registro[chave];
-
-        }
-
-    }
-
-
-    return "";
-
-}
-
-
-// ======================================================
-// CARREGA PLANILHA
-// ======================================================
-
-async function carregarPlanilha() {
+async function carregarCSV(url) {
 
     try {
 
         const resposta =
             await fetch(
-                `${URL_PLANILHA}&_=${Date.now()}`
+                `${url}&_=${Date.now()}`
             );
 
 
@@ -532,7 +524,7 @@ async function carregarPlanilha() {
 
 
         console.log(
-            "PLANILHA RECEBIDA:",
+            "CSV CARREGADO:",
             texto.substring(
                 0,
                 500
@@ -540,7 +532,7 @@ async function carregarPlanilha() {
         );
 
 
-        return converterCSVParaObjetos(
+        return converterCSV(
             texto
         );
 
@@ -548,7 +540,7 @@ async function carregarPlanilha() {
     } catch (erro) {
 
         console.error(
-            "Erro ao carregar planilha:",
+            "ERRO AO CARREGAR CSV:",
             erro
         );
 
@@ -556,6 +548,42 @@ async function carregarPlanilha() {
         return [];
 
     }
+
+}
+
+
+// ======================================================
+// LOCALIZA UM CAMPO
+// ======================================================
+
+function campo(
+    registro,
+    nomes
+) {
+
+    for (
+        const nome of nomes
+    ) {
+
+        const chave =
+            normalizar(nome);
+
+
+        if (
+            Object.prototype.hasOwnProperty.call(
+                registro,
+                chave
+            )
+        ) {
+
+            return registro[chave];
+
+        }
+
+    }
+
+
+    return "";
 
 }
 
@@ -587,94 +615,118 @@ function estadoCorresponde(
     }
 
 
+    const sigla =
+        normalizar(
+            estado[0]
+        );
+
+
+    const nome =
+        normalizar(
+            estado[1]
+        );
+
+
     return (
-        valorNormalizado ===
-            normalizar(estado[0])
-        ||
-        valorNormalizado ===
-            normalizar(estado[1])
+        valorNormalizado === sigla ||
+        valorNormalizado === nome
     );
 
 }
 
 
 // ======================================================
-// PROCURA REVENDA
+// BUSCA REVENDA
 // ======================================================
 
-async function procurarRevenda(
+async function buscarRevenda(
     estado,
     cidade
 ) {
 
-    const registros =
-        await carregarPlanilha();
-
-
-    return registros.filter(
-        registro => {
-
-            const status =
-                pegarCampo(
-                    registro,
-                    [
-                        "STATUS"
-                    ]
-                );
-
-
-            const estadoPlanilha =
-                pegarCampo(
-                    registro,
-                    [
-                        "ESTADO",
-                        "UF"
-                    ]
-                );
-
-
-            const cidadePlanilha =
-                pegarCampo(
-                    registro,
-                    [
-                        "CIDADE",
-                        "MUNICIPIO",
-                        "MUNICÍPIO"
-                    ]
-                );
-
-
-            return (
-
-                normalizar(status) ===
-                "ATIVO"
-
-                &&
-
-                estadoCorresponde(
-                    estadoPlanilha,
-                    estado
-                )
-
-                &&
-
-                normalizar(
-                    cidadePlanilha
-                ) ===
-                normalizar(
-                    cidade
-                )
-
-            );
-
-        }
+    console.log(
+        "BUSCANDO REVENDA..."
     );
+
+
+    const registros =
+        await carregarCSV(
+            URL_REVENDA
+        );
+
+
+    const encontrados =
+        registros.filter(
+            registro => {
+
+                const status =
+                    campo(
+                        registro,
+                        ["STATUS"]
+                    );
+
+
+                const estadoPlanilha =
+                    campo(
+                        registro,
+                        [
+                            "ESTADO",
+                            "UF"
+                        ]
+                    );
+
+
+                const cidadePlanilha =
+                    campo(
+                        registro,
+                        [
+                            "CIDADE",
+                            "MUNICIPIO",
+                            "MUNICÍPIO"
+                        ]
+                    );
+
+
+                return (
+
+                    normalizar(status) ===
+                    "ATIVO"
+
+                    &&
+
+                    estadoCorresponde(
+                        estadoPlanilha,
+                        estado
+                    )
+
+                    &&
+
+                    normalizar(
+                        cidadePlanilha
+                    ) ===
+                    normalizar(
+                        cidade
+                    )
+
+                );
+
+            }
+        );
+
+
+    console.log(
+        "REVENDAS ENCONTRADAS:",
+        encontrados
+    );
+
+
+    return encontrados;
 
 }
 
 
 // ======================================================
-// EXIBE REVENDAS
+// MOSTRA REVENDA
 // ======================================================
 
 function mostrarRevendas(
@@ -701,12 +753,11 @@ function mostrarRevendas(
         revenda => {
 
             const nome =
-                pegarCampo(
+                campo(
                     revenda,
                     [
                         "REVENDA",
-                        "NOME DA REVENDA",
-                        "NOME REVENDA"
+                        "NOME DA REVENDA"
                     ]
                 )
                 ||
@@ -714,13 +765,12 @@ function mostrarRevendas(
 
 
             const endereco =
-                pegarCampo(
+                campo(
                     revenda,
                     [
                         "ENDEREÇO",
                         "ENDERECO",
-                        "ENDEREÇO DA REVENDA",
-                        "ENDERECO DA REVENDA"
+                        "ENDEREÇO DA REVENDA"
                     ]
                 )
                 ||
@@ -728,7 +778,7 @@ function mostrarRevendas(
 
 
             const telefone =
-                pegarCampo(
+                campo(
                     revenda,
                     [
                         "TELEFONE",
@@ -848,31 +898,37 @@ function mostrarRevendas(
 
 
 // ======================================================
-// REPRESENTANTES
-// ======================================================
-//
-// IMPORTANTE:
-//
-// A aba REPRESENTANTES precisa ter:
-//
-// STATUS | ESTADO | REPRESENTANTE | WHATSAPP
-//
+// BUSCA REPRESENTANTE
 // ======================================================
 
-async function procurarRepresentante(
+async function buscarRepresentante(
     estado
 ) {
 
+    console.log(
+        "BUSCANDO REPRESENTANTE PARA:",
+        estado
+    );
+
+
     const registros =
-        await carregarPlanilha();
+        await carregarCSV(
+            URL_REPRESENTANTES
+        );
 
 
-    const representantes =
+    console.log(
+        "REGISTROS DA ABA REPRESENTANTES:",
+        registros
+    );
+
+
+    const encontrados =
         registros.filter(
             registro => {
 
                 const status =
-                    pegarCampo(
+                    campo(
                         registro,
                         [
                             "STATUS"
@@ -881,30 +937,11 @@ async function procurarRepresentante(
 
 
                 const estadoPlanilha =
-                    pegarCampo(
+                    campo(
                         registro,
                         [
                             "ESTADO",
                             "UF"
-                        ]
-                    );
-
-
-                const representante =
-                    pegarCampo(
-                        registro,
-                        [
-                            "REPRESENTANTE"
-                        ]
-                    );
-
-
-                const whatsapp =
-                    pegarCampo(
-                        registro,
-                        [
-                            "WHATSAPP",
-                            "TELEFONE"
                         ]
                     );
 
@@ -921,21 +958,19 @@ async function procurarRepresentante(
                         estado
                     )
 
-                    &&
-
-                    representante !== ""
-
-                    &&
-
-                    whatsapp !== ""
-
                 );
 
             }
         );
 
 
-    return representantes;
+    console.log(
+        "REPRESENTANTES ENCONTRADOS:",
+        encontrados
+    );
+
+
+    return encontrados;
 
 }
 
@@ -951,7 +986,7 @@ function mostrarRepresentante(
 ) {
 
     const nome =
-        pegarCampo(
+        campo(
             representante,
             [
                 "REPRESENTANTE"
@@ -960,7 +995,7 @@ function mostrarRepresentante(
 
 
     const telefone =
-        pegarCampo(
+        campo(
             representante,
             [
                 "WHATSAPP",
@@ -979,9 +1014,7 @@ function mostrarRepresentante(
         );
 
 
-    if (
-        !numero
-    ) {
+    if (!numero) {
 
         mostrarFabrica(
             estado,
@@ -1039,8 +1072,8 @@ Gostaria de falar sobre a compra de FQ4 para minha operação.`;
 
 
             <p>
-                Seu consumo pode ser atendido
-                diretamente pelo representante.
+                Para continuar seu atendimento,
+                fale diretamente com o representante.
             </p>
 
 
@@ -1123,7 +1156,7 @@ Gostaria de receber informações sobre o atendimento direto pela FQ4.`;
 
 
 // ======================================================
-// MOSTRA MERCADO LIVRE
+// MERCADO LIVRE
 // ======================================================
 
 function mostrarMercadoLivre() {
@@ -1260,19 +1293,9 @@ document
                         consumo === "mais"
                     ) {
 
-                        /*
-                         * ATENÇÃO:
-                         *
-                         * Aqui consultamos os representantes.
-                         *
-                         * Porém, para funcionar corretamente,
-                         * a aba REPRESENTANTES precisa estar
-                         * publicada como uma fonte CSV própria.
-                         */
-
 
                         const representantes =
-                            await procurarRepresentante(
+                            await buscarRepresentante(
                                 estado
                             );
 
@@ -1307,7 +1330,7 @@ document
                     // ==================================================
 
                     const revendas =
-                        await procurarRevenda(
+                        await buscarRevenda(
                             estado,
                             cidade
                         );
