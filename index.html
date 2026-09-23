@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Encontre a Revenda FQ4 Mais Próxima</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main class="container">
+
+        <div class="logo-area">
+            <img src="logo-fq4.png" alt="FQ4">
+        </div>
+
+        <h1>ENCONTRE A REVENDA DE FQ4 MAIS PRÓXIMA</h1>
+
+        <p class="subtitle">
+            Informe sua localização e descubra a melhor opção para adquirir FQ4.
+        </p>
+
+        <section class="form-card">
+
+            <div class="campo">
+
+                <label for="estado">
+                    1. Selecione seu estado
+                </label>
+
+                <select id="estado">
+                    <option value="">Selecione o estado</option>
+                </select>
+
+            </div>
+
+
+            <div class="campo">
+
+                <label for="cidade">
+                    2. Selecione sua cidade
+                </label>
+
+                <select id="cidade" disabled>
+
+                    <option value="">
+                        Primeiro selecione o estado
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="campo">
+
+                <label>
+                    3. Qual é o seu consumo mensal de combustível?
+                </label>
+
+                <div class="consumo">
+
+                    <button data-consumo="500">
+                        Até 500 litros
+                    </button>
+
+                    <button data-consumo="1000">
+                        501 a 1.000 litros
+                    </button>
+
+                    <button data-consumo="2000">
+                        1.001 a 2.000 litros
+                    </button>
+
+                    <button data-consumo="mais">
+                        Mais de 2.000 litros
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section id="resultado" class="resultado"></section>
+
+    </main>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
