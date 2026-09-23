@@ -1,0 +1,146 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f7f9;
+    color: #1f2933;
+}
+
+.container {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+}
+
+.logo-area {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.logo-area img {
+    max-width: 180px;
+    max-height: 90px;
+}
+
+h1 {
+    text-align: center;
+    font-size: 30px;
+    line-height: 1.2;
+    margin: 10px 0 15px;
+    font-weight: 700;
+}
+
+.subtitle {
+    text-align: center;
+    color: #667085;
+    font-size: 16px;
+    margin-bottom: 35px;
+}
+
+.form-card {
+    background: white;
+    border-radius: 18px;
+    padding: 30px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+.campo {
+    margin-bottom: 28px;
+}
+
+label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+select {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #d0d5dd;
+    border-radius: 10px;
+    font-size: 16px;
+    background: white;
+}
+
+select:disabled {
+    background: #f2f4f7;
+}
+
+.consumo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.consumo button {
+    padding: 18px 12px;
+    border: 1px solid #d0d5dd;
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.consumo button:hover {
+    border-color: #1f6feb;
+    background: #f5f9ff;
+}
+
+.resultado {
+    margin-top: 25px;
+}
+
+.resultado-card {
+    background: white;
+    border-radius: 18px;
+    padding: 30px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.resultado-card h2 {
+    margin-top: 0;
+}
+
+.botao {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 15px 25px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 700;
+    color: white;
+    background: #1f6feb;
+}
+
+.botao:hover {
+    opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+
+    .container {
+        padding: 25px 15px 40px;
+    }
+
+    h1 {
+        font-size: 23px;
+    }
+
+    .form-card {
+        padding: 20px;
+    }
+
+    .consumo {
+        grid-template-columns: 1fr;
+    }
+
+}
