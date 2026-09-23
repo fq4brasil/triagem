@@ -901,80 +901,90 @@ function mostrarRevendas(
 // BUSCA REPRESENTANTE
 // ======================================================
 
-async function buscarRepresentante(
-    estado
-) {
+async function buscarRepresentante(estado) {
 
-    console.log(
-        "BUSCANDO REPRESENTANTE PARA:",
-        estado
-    );
+    console.log("=================================");
+    console.log("BUSCANDO REPRESENTANTE");
+    console.log("ESTADO SELECIONADO:", estado);
+    console.log("URL REPRESENTANTES:", URL_REPRESENTANTES);
+    console.log("=================================");
 
+    try {
 
-    const registros =
-        await carregarCSV(
-            URL_REPRESENTANTES
+        const resposta = await fetch(
+            URL_REPRESENTANTES + "&_=" + Date.now()
         );
 
+        console.log("STATUS DA RESPOSTA:", resposta.status);
+        console.log("RESPOSTA OK?:", resposta.ok);
 
-    console.log(
-        "REGISTROS DA ABA REPRESENTANTES:",
-        registros
-    );
+        const texto = await resposta.text();
 
+        console.log("CSV RECEBIDO:");
+        console.log(texto);
 
-    const encontrados =
-        registros.filter(
-            registro => {
+        const registros = converterCSV(texto);
 
-                const status =
-                    campo(
-                        registro,
-                        [
-                            "STATUS"
-                        ]
-                    );
+        console.log("REGISTROS CONVERTIDOS:", registros);
+        console.log("TOTAL DE REPRESENTANTES:", registros.length);
 
+        const encontrados = registros.filter(registro => {
 
-                const estadoPlanilha =
-                    campo(
-                        registro,
-                        [
-                            "ESTADO",
-                            "UF"
-                        ]
-                    );
+            const status = campo(registro, ["STATUS"]);
 
+            const estadoPlanilha = campo(registro, [
+                "ESTADO",
+                "UF"
+            ]);
 
-                return (
+            console.log(
+                "ANALISANDO:",
+                registro,
+                "STATUS:",
+                status,
+                "ESTADO:",
+                estadoPlanilha
+            );
 
-                    normalizar(status) ===
-                    "ATIVO"
+            return (
+                normalizar(status) === "ATIVO" &&
+                estadoCorresponde(
+                    estadoPlanilha,
+                    estado
+                )
+            );
+        });
 
-                    &&
-
-                    estadoCorresponde(
-                        estadoPlanilha,
-                        estado
-                    )
-
-                );
-
-            }
+        console.log(
+            "================================="
         );
 
+        console.log(
+            "REPRESENTANTES ENCONTRADOS:",
+            encontrados
+        );
 
-    console.log(
-        "REPRESENTANTES ENCONTRADOS:",
-        encontrados
-    );
+        console.log(
+            "TOTAL ENCONTRADO:",
+            encontrados.length
+        );
 
+        console.log(
+            "================================="
+        );
 
-    return encontrados;
+        return encontrados;
 
+    } catch (erro) {
+
+        console.error(
+            "ERRO AO BUSCAR REPRESENTANTE:",
+            erro
+        );
+
+        return [];
+    }
 }
-
-
 // ======================================================
 // MOSTRA REPRESENTANTE
 // ======================================================
