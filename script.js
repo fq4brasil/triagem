@@ -88,37 +88,6 @@ function normalizar(texto) {
 
 
 // ======================================================
-// LOCALIZA COLUNA
-// Aceita variações de nomes
-// ======================================================
-
-function encontrarColuna(cabecalho, nomesPossiveis) {
-
-    for (const nome of nomesPossiveis) {
-
-        const procurado =
-            normalizar(nome);
-
-        const encontrada =
-            cabecalho.find(
-                coluna =>
-                    normalizar(coluna) === procurado
-            );
-
-        if (encontrada) {
-
-            return encontrada;
-
-        }
-
-    }
-
-    return null;
-
-}
-
-
-// ======================================================
 // CARREGA ESTADOS
 // ======================================================
 
@@ -145,7 +114,7 @@ function carregarEstados() {
 
 
 // ======================================================
-// CARREGA CIDADES
+// CARREGA CIDADES DO IBGE
 // ======================================================
 
 async function carregarCidades(uf) {
@@ -191,7 +160,9 @@ async function carregarCidades(uf) {
 
         cidades[uf] =
             dados
-                .map(item => item.nome)
+                .map(
+                    item => item.nome
+                )
                 .sort(
                     (a, b) =>
                         a.localeCompare(
@@ -209,6 +180,7 @@ async function carregarCidades(uf) {
     } catch (erro) {
 
         console.error(
+            "Erro ao carregar cidades:",
             erro
         );
 
@@ -439,10 +411,104 @@ function parseCSV(texto) {
 
 
 // ======================================================
+// CONVERTE CSV EM OBJETOS
+// ======================================================
+
+function converterCSVParaObjetos(texto) {
+
+    const linhas =
+        parseCSV(texto);
+
+
+    if (
+        !linhas.length
+    ) {
+
+        return [];
+
+    }
+
+
+    const cabecalho =
+        linhas[0].map(
+            coluna =>
+                normalizar(coluna)
+        );
+
+
+    return linhas
+        .slice(1)
+        .map(
+            linha => {
+
+                const registro = {};
+
+
+                cabecalho.forEach(
+                    (
+                        coluna,
+                        indice
+                    ) => {
+
+                        registro[coluna] =
+                            (
+                                linha[indice] ||
+                                ""
+                            ).trim();
+
+                    }
+                );
+
+
+                return registro;
+
+            }
+        );
+
+}
+
+
+// ======================================================
+// LOCALIZA COLUNA
+// ======================================================
+
+function pegarCampo(
+    registro,
+    possibilidades
+) {
+
+    for (
+        const campo of possibilidades
+    ) {
+
+        const chave =
+            normalizar(campo);
+
+
+        if (
+            Object.prototype.hasOwnProperty.call(
+                registro,
+                chave
+            )
+        ) {
+
+            return registro[chave];
+
+        }
+
+    }
+
+
+    return "";
+
+}
+
+
+// ======================================================
 // CARREGA PLANILHA
 // ======================================================
 
-async function carregarRevendas() {
+async function carregarPlanilha() {
 
     try {
 
@@ -466,245 +532,23 @@ async function carregarRevendas() {
 
 
         console.log(
-            "CSV recebido:",
+            "PLANILHA RECEBIDA:",
             texto.substring(
                 0,
-                1000
+                500
             )
         );
 
 
-        const linhas =
-            parseCSV(texto);
-
-
-        if (
-            !linhas.length
-        ) {
-
-            throw new Error(
-                "Planilha vazia."
-            );
-
-        }
-
-
-        // ==================================================
-        // CABEÇALHO
-        // ==================================================
-
-        const cabecalhoOriginal =
-            linhas[0];
-
-
-        const cabecalho =
-            cabecalhoOriginal.map(
-                coluna =>
-                    normalizar(coluna)
-            );
-
-
-        console.log(
-            "CABEÇALHO DA PLANILHA:",
-            cabecalho
+        return converterCSVParaObjetos(
+            texto
         );
-
-
-        // ==================================================
-        // IDENTIFICA AS COLUNAS
-        // ==================================================
-
-        const colunaStatus =
-            encontrarColuna(
-                cabecalho,
-                [
-                    "STATUS"
-                ]
-            );
-
-
-        const colunaEstado =
-            encontrarColuna(
-                cabecalho,
-                [
-                    "ESTADO",
-                    "UF"
-                ]
-            );
-
-
-        const colunaCidade =
-            encontrarColuna(
-                cabecalho,
-                [
-                    "CIDADE",
-                    "MUNICIPIO",
-                    "MUNICÍPIO"
-                ]
-            );
-
-
-        const colunaRevenda =
-            encontrarColuna(
-                cabecalho,
-                [
-                    "REVENDA",
-                    "NOME DA REVENDA",
-                    "NOME REVENDA"
-                ]
-            );
-
-
-        const colunaEndereco =
-            encontrarColuna(
-                cabecalho,
-                [
-                    "ENDEREÇO",
-                    "ENDERECO",
-                    "ENDEREÇO DA REVENDA",
-                    "ENDERECO DA REVENDA"
-                ]
-            );
-
-
-        const colunaTelefone =
-            encontrarColuna(
-                cabecalho,
-                [
-                    "TELEFONE",
-                    "TELEFONE/WHATSAPP",
-                    "TELEFONE WHATSAPP",
-                    "WHATSAPP",
-                    "CELULAR"
-                ]
-            );
-
-
-        console.log(
-            "COLUNA STATUS:",
-            colunaStatus
-        );
-
-        console.log(
-            "COLUNA ESTADO:",
-            colunaEstado
-        );
-
-        console.log(
-            "COLUNA CIDADE:",
-            colunaCidade
-        );
-
-        console.log(
-            "COLUNA REVENDA:",
-            colunaRevenda
-        );
-
-        console.log(
-            "COLUNA ENDEREÇO:",
-            colunaEndereco
-        );
-
-        console.log(
-            "COLUNA TELEFONE:",
-            colunaTelefone
-        );
-
-
-        // ==================================================
-        // TRANSFORMA LINHAS EM OBJETOS
-        // ==================================================
-
-        const registros =
-            linhas
-                .slice(1)
-                .map(
-                    linha => {
-
-                        const registro = {};
-
-
-                        cabecalho.forEach(
-                            (
-                                coluna,
-                                indice
-                            ) => {
-
-                                registro[coluna] =
-                                    (
-                                        linha[indice] ||
-                                        ""
-                                    ).trim();
-
-                            }
-                        );
-
-
-                        // Guarda também as colunas
-                        // encontradas de forma padronizada
-
-                        registro._STATUS =
-                            colunaStatus
-                            ?
-                            registro[colunaStatus]
-                            :
-                            "";
-
-                        registro._ESTADO =
-                            colunaEstado
-                            ?
-                            registro[colunaEstado]
-                            :
-                            "";
-
-                        registro._CIDADE =
-                            colunaCidade
-                            ?
-                            registro[colunaCidade]
-                            :
-                            "";
-
-                        registro._REVENDA =
-                            colunaRevenda
-                            ?
-                            registro[colunaRevenda]
-                            :
-                            "";
-
-                        registro._ENDERECO =
-                            colunaEndereco
-                            ?
-                            registro[colunaEndereco]
-                            :
-                            "";
-
-                        registro._TELEFONE =
-                            colunaTelefone
-                            ?
-                            registro[colunaTelefone]
-                            :
-                            "";
-
-
-                        return registro;
-
-                    }
-                );
-
-
-        console.log(
-            "PRIMEIRO REGISTRO:",
-            registros[0]
-        );
-
-
-        return registros;
 
 
     } catch (erro) {
 
         console.error(
-            "ERRO AO CARREGAR PLANILHA:",
+            "Erro ao carregar planilha:",
             erro
         );
 
@@ -755,6 +599,579 @@ function estadoCorresponde(
 
 
 // ======================================================
+// PROCURA REVENDA
+// ======================================================
+
+async function procurarRevenda(
+    estado,
+    cidade
+) {
+
+    const registros =
+        await carregarPlanilha();
+
+
+    return registros.filter(
+        registro => {
+
+            const status =
+                pegarCampo(
+                    registro,
+                    [
+                        "STATUS"
+                    ]
+                );
+
+
+            const estadoPlanilha =
+                pegarCampo(
+                    registro,
+                    [
+                        "ESTADO",
+                        "UF"
+                    ]
+                );
+
+
+            const cidadePlanilha =
+                pegarCampo(
+                    registro,
+                    [
+                        "CIDADE",
+                        "MUNICIPIO",
+                        "MUNICÍPIO"
+                    ]
+                );
+
+
+            return (
+
+                normalizar(status) ===
+                "ATIVO"
+
+                &&
+
+                estadoCorresponde(
+                    estadoPlanilha,
+                    estado
+                )
+
+                &&
+
+                normalizar(
+                    cidadePlanilha
+                ) ===
+                normalizar(
+                    cidade
+                )
+
+            );
+
+        }
+    );
+
+}
+
+
+// ======================================================
+// EXIBE REVENDAS
+// ======================================================
+
+function mostrarRevendas(
+    revendas
+) {
+
+    let html = `
+
+        <div class="resultado-card">
+
+            <h2>
+                Encontramos uma revenda FQ4!
+            </h2>
+
+            <p>
+                Confira as opções disponíveis
+                na sua cidade:
+            </p>
+
+    `;
+
+
+    revendas.forEach(
+        revenda => {
+
+            const nome =
+                pegarCampo(
+                    revenda,
+                    [
+                        "REVENDA",
+                        "NOME DA REVENDA",
+                        "NOME REVENDA"
+                    ]
+                )
+                ||
+                "Revenda FQ4";
+
+
+            const endereco =
+                pegarCampo(
+                    revenda,
+                    [
+                        "ENDEREÇO",
+                        "ENDERECO",
+                        "ENDEREÇO DA REVENDA",
+                        "ENDERECO DA REVENDA"
+                    ]
+                )
+                ||
+                "Endereço não informado";
+
+
+            const telefone =
+                pegarCampo(
+                    revenda,
+                    [
+                        "TELEFONE",
+                        "TELEFONE/WHATSAPP",
+                        "WHATSAPP",
+                        "CELULAR"
+                    ]
+                )
+                ||
+                "Telefone não informado";
+
+
+            let numero =
+                String(
+                    telefone
+                )
+                .replace(
+                    /\D/g,
+                    ""
+                );
+
+
+            let whatsapp =
+                "";
+
+
+            if (numero) {
+
+                if (
+                    numero.startsWith("55")
+                ) {
+
+                    whatsapp =
+                        `https://wa.me/${numero}`;
+
+                } else {
+
+                    whatsapp =
+                        `https://wa.me/55${numero}`;
+
+                }
+
+            }
+
+
+            html += `
+
+                <div class="revenda-card">
+
+                    <h3>
+                        ${nome}
+                    </h3>
+
+
+                    <div class="info-revenda">
+
+                        <strong>
+                            📍 Endereço
+                        </strong>
+
+                        <p>
+                            ${endereco}
+                        </p>
+
+                    </div>
+
+
+                    <div class="info-revenda">
+
+                        <strong>
+                            📞 Telefone
+                        </strong>
+
+                        <p>
+                            ${telefone}
+                        </p>
+
+                    </div>
+
+
+                    ${
+                        whatsapp
+                        ?
+                        `
+                        <a
+                            class="botao botao-whatsapp"
+                            href="${whatsapp}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            FALAR COM A REVENDA NO WHATSAPP
+                        </a>
+                        `
+                        :
+                        ""
+                    }
+
+                </div>
+
+            `;
+
+        }
+    );
+
+
+    html += `
+
+        </div>
+
+    `;
+
+
+    resultado.innerHTML =
+        html;
+
+}
+
+
+// ======================================================
+// REPRESENTANTES
+// ======================================================
+//
+// IMPORTANTE:
+//
+// A aba REPRESENTANTES precisa ter:
+//
+// STATUS | ESTADO | REPRESENTANTE | WHATSAPP
+//
+// ======================================================
+
+async function procurarRepresentante(
+    estado
+) {
+
+    const registros =
+        await carregarPlanilha();
+
+
+    const representantes =
+        registros.filter(
+            registro => {
+
+                const status =
+                    pegarCampo(
+                        registro,
+                        [
+                            "STATUS"
+                        ]
+                    );
+
+
+                const estadoPlanilha =
+                    pegarCampo(
+                        registro,
+                        [
+                            "ESTADO",
+                            "UF"
+                        ]
+                    );
+
+
+                const representante =
+                    pegarCampo(
+                        registro,
+                        [
+                            "REPRESENTANTE"
+                        ]
+                    );
+
+
+                const whatsapp =
+                    pegarCampo(
+                        registro,
+                        [
+                            "WHATSAPP",
+                            "TELEFONE"
+                        ]
+                    );
+
+
+                return (
+
+                    normalizar(status) ===
+                    "ATIVO"
+
+                    &&
+
+                    estadoCorresponde(
+                        estadoPlanilha,
+                        estado
+                    )
+
+                    &&
+
+                    representante !== ""
+
+                    &&
+
+                    whatsapp !== ""
+
+                );
+
+            }
+        );
+
+
+    return representantes;
+
+}
+
+
+// ======================================================
+// MOSTRA REPRESENTANTE
+// ======================================================
+
+function mostrarRepresentante(
+    representante,
+    estado,
+    cidade
+) {
+
+    const nome =
+        pegarCampo(
+            representante,
+            [
+                "REPRESENTANTE"
+            ]
+        );
+
+
+    const telefone =
+        pegarCampo(
+            representante,
+            [
+                "WHATSAPP",
+                "TELEFONE"
+            ]
+        );
+
+
+    let numero =
+        String(
+            telefone
+        )
+        .replace(
+            /\D/g,
+            ""
+        );
+
+
+    if (
+        !numero
+    ) {
+
+        mostrarFabrica(
+            estado,
+            cidade
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !numero.startsWith("55")
+    ) {
+
+        numero =
+            "55" + numero;
+
+    }
+
+
+    const mensagem =
+        `Olá! Vim pelo site da FQ4.
+
+Tenho consumo superior a 2.000 litros de combustível por mês.
+
+Estado: ${estado}
+Cidade: ${cidade}
+
+Gostaria de falar sobre a compra de FQ4 para minha operação.`;
+
+
+    const whatsapp =
+        `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
+
+
+    resultado.innerHTML = `
+
+        <div class="resultado-card">
+
+            <h2>
+                Atendimento FQ4 para grandes consumidores
+            </h2>
+
+
+            <p>
+                Identificamos um representante
+                que atende o seu estado.
+            </p>
+
+
+            <h3>
+                ${nome}
+            </h3>
+
+
+            <p>
+                Seu consumo pode ser atendido
+                diretamente pelo representante.
+            </p>
+
+
+            <a
+                class="botao botao-whatsapp"
+                href="${whatsapp}"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                FALAR COM O REPRESENTANTE
+            </a>
+
+        </div>
+
+    `;
+
+}
+
+
+// ======================================================
+// MOSTRA FÁBRICA
+// ======================================================
+
+function mostrarFabrica(
+    estado,
+    cidade
+) {
+
+    const mensagem =
+        `Olá! Vim pelo site da FQ4.
+
+Tenho consumo superior a 2.000 litros de combustível por mês.
+
+Estado: ${estado}
+Cidade: ${cidade}
+
+Gostaria de receber informações sobre o atendimento direto pela FQ4.`;
+
+
+    const whatsapp =
+        `https://wa.me/${WHATSAPP_FABRICA}?text=${encodeURIComponent(mensagem)}`;
+
+
+    resultado.innerHTML = `
+
+        <div class="resultado-card">
+
+            <h2>
+                Atendimento direto FQ4
+            </h2>
+
+
+            <p>
+                Seu consumo tem potencial para
+                atendimento comercial direto.
+            </p>
+
+
+            <p>
+                No momento, não identificamos
+                um representante cadastrado
+                para o seu estado.
+            </p>
+
+
+            <a
+                class="botao botao-whatsapp"
+                href="${whatsapp}"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                FALAR COM A FQ4
+            </a>
+
+        </div>
+
+    `;
+
+}
+
+
+// ======================================================
+// MOSTRA MERCADO LIVRE
+// ======================================================
+
+function mostrarMercadoLivre() {
+
+    resultado.innerHTML = `
+
+        <div class="resultado-card">
+
+            <h2>
+                Ainda não temos uma revenda
+                cadastrada nesta cidade.
+            </h2>
+
+
+            <p>
+                Você pode pesquisar produtos FQ4
+                disponíveis para sua região
+                no Mercado Livre.
+            </p>
+
+
+            <p>
+                Pesquise por:
+            </p>
+
+
+            <h3>
+                FQ4 FLEX/DIESEL
+            </h3>
+
+
+            <a
+                class="botao botao-mercado"
+                href="${URL_MERCADO_LIVRE}"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                PESQUISAR NO MERCADO LIVRE
+            </a>
+
+        </div>
+
+    `;
+
+}
+
+
+// ======================================================
 // BOTÕES DE CONSUMO
 // ======================================================
 
@@ -784,7 +1201,7 @@ document
 
 
                     // ------------------------------------------
-                    // VALIDAÇÃO
+                    // VALIDA ESTADO
                     // ------------------------------------------
 
                     if (!estado) {
@@ -797,6 +1214,10 @@ document
 
                     }
 
+
+                    // ------------------------------------------
+                    // VALIDA CIDADE
+                    // ------------------------------------------
 
                     if (!cidade) {
 
@@ -823,7 +1244,7 @@ document
 
                             <p>
                                 Estamos verificando
-                                as opções para você.
+                                a melhor opção para você.
                             </p>
 
                         </div>
@@ -839,58 +1260,41 @@ document
                         consumo === "mais"
                     ) {
 
-
-                        const mensagem =
-                            `Olá! Vim pelo site da FQ4.
-
-Tenho consumo superior a 2.000 litros de combustível por mês.
-
-Estado: ${estado}
-Cidade: ${cidade}
-
-Gostaria de receber informações sobre o atendimento direto pela FQ4.`;
-
-
-                        const whatsapp =
-                            `https://wa.me/${WHATSAPP_FABRICA}?text=${encodeURIComponent(mensagem)}`;
+                        /*
+                         * ATENÇÃO:
+                         *
+                         * Aqui consultamos os representantes.
+                         *
+                         * Porém, para funcionar corretamente,
+                         * a aba REPRESENTANTES precisa estar
+                         * publicada como uma fonte CSV própria.
+                         */
 
 
-                        resultado.innerHTML = `
+                        const representantes =
+                            await procurarRepresentante(
+                                estado
+                            );
 
-                            <div class="resultado-card">
 
-                                <h2>
-                                    Seu consumo tem potencial
-                                    para atendimento direto pela FQ4.
-                                </h2>
+                        if (
+                            representantes.length > 0
+                        ) {
 
-                                <p>
-                                    Para consumos acima de
-                                    <strong>2.000 litros</strong>
-                                    de combustível por mês,
-                                    podemos avaliar uma solução
-                                    de atendimento direto pela fábrica.
-                                </p>
+                            mostrarRepresentante(
+                                representantes[0],
+                                estado,
+                                cidade
+                            );
 
-                                <p>
-                                    <strong>
-                                        Potencial superior a
-                                        2 litros de FQ4 por mês.
-                                    </strong>
-                                </p>
+                        } else {
 
-                                <a
-                                    class="botao botao-whatsapp"
-                                    href="${whatsapp}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    FALAR COM A FÁBRICA
-                                </a>
+                            mostrarFabrica(
+                                estado,
+                                cidade
+                            );
 
-                            </div>
-
-                        `;
+                        }
 
 
                         return;
@@ -899,291 +1303,32 @@ Gostaria de receber informações sobre o atendimento direto pela FQ4.`;
 
 
                     // ==================================================
-                    // BUSCA REVENDA
+                    // ATÉ 2.000 LITROS
                     // ==================================================
 
                     const revendas =
-                        await carregarRevendas();
-
-
-                    console.log(
-                        "ESTADO SELECIONADO:",
-                        estado
-                    );
-
-
-                    console.log(
-                        "CIDADE SELECIONADA:",
-                        cidade
-                    );
-
-
-                    // ==================================================
-                    // FILTRA
-                    // ==================================================
-
-                    const resultados =
-                        revendas.filter(
-                            revenda => {
-
-
-                                const status =
-                                    normalizar(
-                                        revenda._STATUS
-                                    );
-
-
-                                const cidadePlanilha =
-                                    normalizar(
-                                        revenda._CIDADE
-                                    );
-
-
-                                const cidadeSelecionada =
-                                    normalizar(
-                                        cidade
-                                    );
-
-
-                                const estadoValido =
-                                    estadoCorresponde(
-                                        revenda._ESTADO,
-                                        estado
-                                    );
-
-
-                                const cidadeValida =
-                                    cidadePlanilha ===
-                                    cidadeSelecionada;
-
-
-                                return (
-                                    status === "ATIVO" &&
-                                    estadoValido &&
-                                    cidadeValida
-                                );
-
-                            }
+                        await procurarRevenda(
+                            estado,
+                            cidade
                         );
 
-
-                    console.log(
-                        "RESULTADOS ENCONTRADOS:",
-                        resultados
-                    );
-
-
-                    // ==================================================
-                    // ENCONTROU
-                    // ==================================================
 
                     if (
-                        resultados.length > 0
+                        revendas.length > 0
                     ) {
 
-
-                        let html = `
-
-                            <div class="resultado-card">
-
-                                <h2>
-                                    Encontramos uma
-                                    revenda FQ4!
-                                </h2>
-
-                                <p>
-                                    Confira as opções
-                                    disponíveis na sua cidade:
-                                </p>
-
-                        `;
-
-
-                        resultados.forEach(
-                            revenda => {
-
-
-                                const nome =
-                                    revenda._REVENDA ||
-                                    "Revenda FQ4";
-
-
-                                const endereco =
-                                    revenda._ENDERECO ||
-                                    "Endereço não informado";
-
-
-                                const telefoneOriginal =
-                                    revenda._TELEFONE ||
-                                    "Telefone não informado";
-
-
-                                // ----------------------------------
-                                // TELEFONE
-                                // ----------------------------------
-
-                                let telefone =
-                                    String(
-                                        telefoneOriginal
-                                    )
-                                    .replace(
-                                        /\D/g,
-                                        ""
-                                    );
-
-
-                                let whatsapp =
-                                    "";
-
-
-                                if (
-                                    telefone
-                                ) {
-
-                                    if (
-                                        telefone.startsWith("55")
-                                    ) {
-
-                                        whatsapp =
-                                            `https://wa.me/${telefone}`;
-
-                                    } else {
-
-                                        whatsapp =
-                                            `https://wa.me/55${telefone}`;
-
-                                    }
-
-                                }
-
-
-                                // ----------------------------------
-                                // CARD
-                                // ----------------------------------
-
-                                html += `
-
-                                    <div
-                                        class="revenda-card"
-                                    >
-
-                                        <h3>
-                                            ${nome}
-                                        </h3>
-
-
-                                        <div
-                                            class="info-revenda"
-                                        >
-
-                                            <strong>
-                                                📍 Endereço
-                                            </strong>
-
-                                            <p>
-                                                ${endereco}
-                                            </p>
-
-                                        </div>
-
-
-                                        <div
-                                            class="info-revenda"
-                                        >
-
-                                            <strong>
-                                                📞 Telefone
-                                            </strong>
-
-                                            <p>
-                                                ${telefoneOriginal}
-                                            </p>
-
-                                        </div>
-
-
-                                        ${
-                                            whatsapp
-                                            ?
-                                            `
-                                            <a
-                                                class="botao botao-whatsapp"
-                                                href="${whatsapp}"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                FALAR COM A REVENDA NO WHATSAPP
-                                            </a>
-                                            `
-                                            :
-                                            ""
-                                        }
-
-                                    </div>
-
-                                `;
-
-                            }
+                        mostrarRevendas(
+                            revendas
                         );
 
+                    } else {
 
-                        html += `
-
-                            </div>
-
-                        `;
-
-
-                        resultado.innerHTML =
-                            html;
-
-
-                        return;
+                        mostrarMercadoLivre();
 
                     }
 
-
-                    // ==================================================
-                    // NÃO ENCONTROU
-                    // ==================================================
-
-                    resultado.innerHTML = `
-
-                        <div class="resultado-card">
-
-                            <h2>
-                                Ainda não temos uma revenda
-                                cadastrada nesta cidade.
-                            </h2>
-
-                            <p>
-                                Você pode pesquisar por
-                                produtos FQ4 disponíveis
-                                para sua região no Mercado Livre.
-                            </p>
-
-                            <p>
-                                Pesquise por:
-                            </p>
-
-                            <h3>
-                                FQ4 FLEX/DIESEL
-                            </h3>
-
-                            <a
-                                class="botao botao-mercado"
-                                href="${URL_MERCADO_LIVRE}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                PESQUISAR NO MERCADO LIVRE
-                            </a>
-
-                        </div>
-
-                    `;
-
                 }
+
             );
 
         }
