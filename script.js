@@ -3,7 +3,7 @@
 // ======================================================
 
 const URL_PLANILHA =
-    "COLE_AQUI_A_URL_CSV_DA_PLANILHA";
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnU51Kz93Aij3mNKNvOmzEI_z50xQSWvuf-09_J-UDucrpOwpfLEkdNkegnyO8vJ5VeSmXYRx_JyxL/pub?output=csv";
 
 const WHATSAPP_FABRICA =
     "5519994712833";
