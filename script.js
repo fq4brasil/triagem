@@ -1412,91 +1412,68 @@ document
                     // ATÉ 2.000 LITROS
                     // ==========================================
 
-                    const revendas =
-                        await buscarRevenda(
-                            estado,
-                            cidade
-                        );
+    
+// ==========================================
+// ATÉ 2.000 LITROS
+// ==========================================
 
-                    if (
-                        revendas.length > 0
-                    ) {
+const revendas = await buscarRevenda(estado, cidade);
 
-                        const primeiraRevenda =
-                            revendas[0];
+if (revendas.length > 0) {
+    const primeiraRevenda = revendas[0];
 
-                        const nomeRevenda =
-                            campo(
-                                primeiraRevenda,
-                                [
-                                    "REVENDA",
-                                    "NOME DA REVENDA"
-                                ]
-                            );
+    const nomeRevenda = campo(primeiraRevenda, [
+        "REVENDA",
+        "NOME DA REVENDA"
+    ]);
 
-                        await registrarLead({
+    await registrarLead({
+        estado: estado,
+        cidade: cidade,
+        consumo: consumo,
+        faixa: "Até 2.000 L/mês",
+        destino: "REVENDA",
+        atendimento: nomeRevenda || "Revenda FQ4"
+    });
 
-                            estado:
-                                estado,
+    mostrarRevendas(revendas);
+} else {
+    // Sem revenda local: procura representante estadual.
+    const representantes = await buscarRepresentante(estado);
 
-                            cidade:
-                                cidade,
+    if (representantes.length > 0) {
+        const representante = representantes[0];
 
-                            consumo:
-                                consumo,
+        const nomeRepresentante = campo(representante, [
+            "REPRESENTANTE"
+        ]);
 
-                            faixa:
-                                "Até 2.000 L/mês",
+        await registrarLead({
+            estado: estado,
+            cidade: cidade,
+            consumo: consumo,
+            faixa: "Até 2.000 L/mês",
+            destino: "REPRESENTANTE",
+            atendimento: nomeRepresentante || "Representante FQ4"
+        });
 
-                            destino:
-                                "REVENDA",
+        mostrarRepresentante(representante, estado, cidade);
+    } else {
+        // Sem revenda local e sem representante estadual.
+        await registrarLead({
+            estado: estado,
+            cidade: cidade,
+            consumo: consumo,
+            faixa: "Até 2.000 L/mês",
+            destino: "MERCADO LIVRE",
+            atendimento: "Sem revenda ou representante cadastrado"
+        });
 
-                            atendimento:
-                                nomeRevenda ||
-                                "Revenda FQ4"
+        mostrarMercadoLivre();
+    }
+}
 
-                        });
-
-                        mostrarRevendas(
-                            revendas
-                        );
-
-                    }
-
-                    else {
-
-                        await registrarLead({
-
-                            estado:
-                                estado,
-
-                            cidade:
-                                cidade,
-
-                            consumo:
-                                consumo,
-
-                            faixa:
-                                "Até 2.000 L/mês",
-
-                            destino:
-                                "MERCADO LIVRE",
-
-                            atendimento:
-                                "Sem revenda cadastrada"
-
-                        });
-
-                        mostrarMercadoLivre();
-
-                    }
-
-                }
-            );
-
-        }
-    );
-
+return;
 // ======================================================
 // INICIALIZAÇÃO
 // ======================================================
