@@ -697,8 +697,8 @@ function mostrarRevendas(
                     revenda,
                     [
                         "TELEFONE",
-                        "TELEFONE/WHATSAPP",
-                        "WHATSAPP",
+                        "TELEFONE/",
+                        "",
                         "CELULAR"
                     ]
                 ) ||
@@ -712,7 +712,7 @@ function mostrarRevendas(
                     ""
                 );
 
-            let whatsapp = "";
+            let  = "";
 
             if (numero) {
 
@@ -720,14 +720,14 @@ function mostrarRevendas(
                     numero.startsWith("55")
                 ) {
 
-                    whatsapp =
+                     =
                         `https://wa.me/${numero}`;
 
                 }
 
                 else {
 
-                    whatsapp =
+                     =
                         `https://wa.me/55${numero}`;
 
                 }
