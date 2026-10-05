@@ -11,7 +11,7 @@ const URL_REPRESENTANTES =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnU51Kz93Aij3mNKNvOmzEI_z50xQSWvuf-09_J-UDucrpOwpfLEkdNkegnyO8vJ5VeSmXYRx_JyxL/pub?gid=620527169&single=true&output=csv";
 
 // ======================================================
-// URL DO GOOGLE APPS SCRIPT - CAPTURA DE LEADS
+// GOOGLE APPS SCRIPT - CAPTURA DE LEADS
 // ======================================================
 
 const URL_LEADS =
@@ -49,7 +49,6 @@ const resultado =
 // ======================================================
 
 const estados = [
-
     ["AC", "Acre"],
     ["AL", "Alagoas"],
     ["AP", "Amapá"],
@@ -77,7 +76,6 @@ const estados = [
     ["SP", "São Paulo"],
     ["SE", "Sergipe"],
     ["TO", "Tocantins"]
-
 ];
 
 let cidades = {};
@@ -104,6 +102,15 @@ function normalizar(texto) {
 
 function carregarEstados() {
 
+    if (!estadoSelect) {
+        console.error("Elemento #estado não encontrado.");
+        return;
+    }
+
+    // Evita duplicar estados caso o script seja executado novamente
+    estadoSelect.innerHTML =
+        '<option value="">Selecione seu estado</option>';
+
     estados.forEach(([sigla, nome]) => {
 
         const option =
@@ -126,11 +133,24 @@ function carregarEstados() {
 
 async function carregarCidades(uf) {
 
+    if (!cidadeSelect) {
+        return;
+    }
+
     cidadeSelect.innerHTML =
         '<option value="">Carregando cidades...</option>';
 
     cidadeSelect.disabled = true;
 
+    if (!uf) {
+
+        cidadeSelect.innerHTML =
+            '<option value="">Primeiro selecione o estado</option>';
+
+        return;
+    }
+
+    // Se já carregou anteriormente, utiliza o cache
     if (cidades[uf]) {
 
         preencherCidades(
@@ -138,7 +158,6 @@ async function carregarCidades(uf) {
         );
 
         return;
-
     }
 
     try {
@@ -222,32 +241,37 @@ function preencherCidades(lista) {
 // EVENTO ESTADO
 // ======================================================
 
-estadoSelect.addEventListener(
-    "change",
-    async function() {
+if (estadoSelect) {
 
-        resultado.innerHTML = "";
+    estadoSelect.addEventListener(
+        "change",
+        async function() {
 
-        cidadeSelect.innerHTML =
-            '<option value="">Selecione sua cidade</option>';
-
-        cidadeSelect.disabled = true;
-
-        if (!this.value) {
+            if (resultado) {
+                resultado.innerHTML = "";
+            }
 
             cidadeSelect.innerHTML =
-                '<option value="">Primeiro selecione o estado</option>';
+                '<option value="">Selecione sua cidade</option>';
 
-            return;
+            cidadeSelect.disabled = true;
+
+            if (!this.value) {
+
+                cidadeSelect.innerHTML =
+                    '<option value="">Primeiro selecione o estado</option>';
+
+                return;
+            }
+
+            await carregarCidades(
+                this.value
+            );
 
         }
+    );
 
-        await carregarCidades(
-            this.value
-        );
-
-    }
-);
+}
 
 // ======================================================
 // LEITURA DE CSV
@@ -259,7 +283,7 @@ function parseCSV(texto) {
 
     let linha = [];
 
-    let campo = "";
+    let campoAtual = "";
 
     let dentroAspas = false;
 
@@ -275,18 +299,20 @@ function parseCSV(texto) {
         const proximo =
             texto[i + 1];
 
+        // Aspas duplicadas dentro de campo
         if (
             caractere === '"' &&
             dentroAspas &&
             proximo === '"'
         ) {
 
-            campo += '"';
+            campoAtual += '"';
 
             i++;
 
         }
 
+        // Abre/fecha aspas
         else if (
             caractere === '"'
         ) {
@@ -296,19 +322,21 @@ function parseCSV(texto) {
 
         }
 
+        // Separador CSV
         else if (
             caractere === "," &&
             !dentroAspas
         ) {
 
             linha.push(
-                campo
+                campoAtual
             );
 
-            campo = "";
+            campoAtual = "";
 
         }
 
+        // Quebra de linha
         else if (
             (
                 caractere === "\n" ||
@@ -327,10 +355,10 @@ function parseCSV(texto) {
             }
 
             linha.push(
-                campo
+                campoAtual
             );
 
-            campo = "";
+            campoAtual = "";
 
             if (
                 linha.some(
@@ -351,19 +379,20 @@ function parseCSV(texto) {
 
         else {
 
-            campo += caractere;
+            campoAtual += caractere;
 
         }
 
     }
 
+    // Última linha
     if (
-        campo !== "" ||
+        campoAtual !== "" ||
         linha.length > 0
     ) {
 
         linha.push(
-            campo
+            campoAtual
         );
 
         if (
@@ -395,9 +424,7 @@ function converterCSV(texto) {
         parseCSV(texto);
 
     if (!linhas.length) {
-
         return [];
-
     }
 
     const cabecalho =
@@ -446,15 +473,20 @@ async function carregarCSV(url) {
 
     try {
 
+        const separador =
+            url.includes("?")
+                ? "&"
+                : "?";
+
         const resposta =
             await fetch(
-                `${url}&_=${Date.now()}`
+                `${url}${separador}_=${Date.now()}`
             );
 
         if (!resposta.ok) {
 
             throw new Error(
-                "Não foi possível acessar a planilha."
+                `Não foi possível acessar a planilha. Status: ${resposta.status}`
             );
 
         }
@@ -541,9 +573,7 @@ function estadoCorresponde(
         );
 
     if (!estado) {
-
         return false;
-
     }
 
     const sigla =
@@ -574,6 +604,16 @@ async function buscarRevenda(
 
     console.log(
         "BUSCANDO REVENDA..."
+    );
+
+    console.log(
+        "Estado:",
+        estado
+    );
+
+    console.log(
+        "Cidade:",
+        cidade
     );
 
     const registros =
@@ -646,6 +686,21 @@ async function buscarRevenda(
 }
 
 // ======================================================
+// ESCAPAR HTML
+// ======================================================
+
+function escaparHTML(valor) {
+
+    return String(valor || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+// ======================================================
 // MOSTRAR REVENDAS
 // ======================================================
 
@@ -658,7 +713,7 @@ function mostrarRevendas(
         <div class="resultado-card">
 
             <h2>
-                Encontramos uma revenda FQ4!
+                Encontramos revendas FQ4!
             </h2>
 
             <p>
@@ -676,7 +731,8 @@ function mostrarRevendas(
                     revenda,
                     [
                         "REVENDA",
-                        "NOME DA REVENDA"
+                        "NOME DA REVENDA",
+                        "NOME"
                     ]
                 ) ||
                 "Revenda FQ4";
@@ -698,11 +754,11 @@ function mostrarRevendas(
                     [
                         "TELEFONE",
                         "TELEFONE/",
-                        "",
-                        "CELULAR"
+                        "CELULAR",
+                        "WHATSAPP"
                     ]
                 ) ||
-                "Telefone não informado";
+                "";
 
             let numero =
                 String(
@@ -712,7 +768,7 @@ function mostrarRevendas(
                     ""
                 );
 
-            let  = "";
+            let whatsapp = "";
 
             if (numero) {
 
@@ -720,14 +776,14 @@ function mostrarRevendas(
                     numero.startsWith("55")
                 ) {
 
-                     =
+                    whatsapp =
                         `https://wa.me/${numero}`;
 
                 }
 
                 else {
 
-                     =
+                    whatsapp =
                         `https://wa.me/55${numero}`;
 
                 }
@@ -739,7 +795,7 @@ function mostrarRevendas(
                 <div class="revenda-card">
 
                     <h3>
-                        ${nome}
+                        ${escaparHTML(nome)}
                     </h3>
 
                     <div class="info-revenda">
@@ -749,22 +805,28 @@ function mostrarRevendas(
                         </strong>
 
                         <p>
-                            ${endereco}
+                            ${escaparHTML(endereco)}
                         </p>
 
                     </div>
 
-                    <div class="info-revenda">
+                    ${
+                        telefone
+                        ? `
+                            <div class="info-revenda">
 
-                        <strong>
-                            📞 Telefone
-                        </strong>
+                                <strong>
+                                    📞 Telefone
+                                </strong>
 
-                        <p>
-                            ${telefone}
-                        </p>
+                                <p>
+                                    ${escaparHTML(telefone)}
+                                </p>
 
-                    </div>
+                            </div>
+                        `
+                        : ""
+                    }
 
                     ${
                         whatsapp
@@ -831,10 +893,16 @@ async function buscarRepresentante(
 
     try {
 
+        const separador =
+            URL_REPRESENTANTES.includes("?")
+                ? "&"
+                : "?";
+
         const resposta =
             await fetch(
                 URL_REPRESENTANTES +
-                "&_=" +
+                separador +
+                "_=" +
                 Date.now()
             );
 
@@ -843,10 +911,13 @@ async function buscarRepresentante(
             resposta.status
         );
 
-        console.log(
-            "RESPOSTA OK?:",
-            resposta.ok
-        );
+        if (!resposta.ok) {
+
+            throw new Error(
+                `Erro HTTP ${resposta.status}`
+            );
+
+        }
 
         const texto =
             await resposta.text();
@@ -906,7 +977,8 @@ async function buscarRepresentante(
 
                         normalizar(
                             status
-                        ) === "ATIVO"
+                        ) ===
+                        "ATIVO"
 
                         &&
 
@@ -1057,16 +1129,20 @@ function mostrarRepresentante(
         campo(
             representante,
             [
-                "REPRESENTANTE"
+                "REPRESENTANTE",
+                "NOME",
+                "NOME DO REPRESENTANTE"
             ]
-        );
+        ) ||
+        "Representante FQ4";
 
     const telefone =
         campo(
             representante,
             [
                 "WHATSAPP",
-                "TELEFONE"
+                "TELEFONE",
+                "CELULAR"
             ]
         );
 
@@ -1078,6 +1154,8 @@ function mostrarRepresentante(
             ""
         );
 
+    // Se existe representante mas não existe telefone,
+    // direciona para a FQ4.
     if (!numero) {
 
         mostrarFabrica(
@@ -1102,12 +1180,12 @@ function mostrarRepresentante(
     const mensagem =
         `Olá! Vim pelo site da FQ4.
 
-Tenho consumo superior a 2.000 litros de combustível por mês.
+Gostaria de informações para adquirir FQ4 para minha operação.
 
 Estado: ${estado}
 Cidade: ${cidade}
 
-Gostaria de falar sobre a compra de FQ4 para minha operação.`;
+Gostaria de falar com o representante da minha região.`;
 
     const whatsapp =
         `https://wa.me/${numero}?text=${encodeURIComponent(
@@ -1119,7 +1197,7 @@ Gostaria de falar sobre a compra de FQ4 para minha operação.`;
         <div class="resultado-card">
 
             <h2>
-                Atendimento FQ4 para grandes consumidores
+                Atendimento FQ4 para sua região
             </h2>
 
             <p>
@@ -1128,7 +1206,7 @@ Gostaria de falar sobre a compra de FQ4 para minha operação.`;
             </p>
 
             <h3>
-                ${nome}
+                ${escaparHTML(nome)}
             </h3>
 
             <p>
@@ -1316,6 +1394,8 @@ document
 
                     // ==========================================
                     // MAIS DE 2.000 LITROS
+                    // REGRA:
+                    // REPRESENTANTE -> FÁBRICA
                     // ==========================================
 
                     if (
@@ -1338,7 +1418,9 @@ document
                                 campo(
                                     representante,
                                     [
-                                        "REPRESENTANTE"
+                                        "REPRESENTANTE",
+                                        "NOME",
+                                        "NOME DO REPRESENTANTE"
                                     ]
                                 );
 
@@ -1410,72 +1492,197 @@ document
 
                     // ==========================================
                     // ATÉ 2.000 LITROS
+                    //
+                    // REGRA:
+                    // 1. REVENDA NA CIDADE
+                    // 2. REPRESENTANTE NO ESTADO
+                    // 3. MERCADO LIVRE
                     // ==========================================
 
-    
-// ==========================================
-// ATÉ 2.000 LITROS
-// ==========================================
+                    const revendas =
+                        await buscarRevenda(
+                            estado,
+                            cidade
+                        );
 
-const revendas = await buscarRevenda(estado, cidade);
+                    // ------------------------------------------
+                    // 1. ENCONTROU REVENDA
+                    // ------------------------------------------
 
-if (revendas.length > 0) {
-    const primeiraRevenda = revendas[0];
+                    if (
+                        revendas.length > 0
+                    ) {
 
-    const nomeRevenda = campo(primeiraRevenda, [
-        "REVENDA",
-        "NOME DA REVENDA"
-    ]);
+                        const primeiraRevenda =
+                            revendas[0];
 
-    await registrarLead({
-        estado: estado,
-        cidade: cidade,
-        consumo: consumo,
-        faixa: "Até 2.000 L/mês",
-        destino: "REVENDA",
-        atendimento: nomeRevenda || "Revenda FQ4"
-    });
+                        const nomeRevenda =
+                            campo(
+                                primeiraRevenda,
+                                [
+                                    "REVENDA",
+                                    "NOME DA REVENDA",
+                                    "NOME"
+                                ]
+                            );
 
-    mostrarRevendas(revendas);
-} else {
-    // Sem revenda local: procura representante estadual.
-    const representantes = await buscarRepresentante(estado);
+                        await registrarLead({
 
-    if (representantes.length > 0) {
-        const representante = representantes[0];
+                            estado:
+                                estado,
 
-        const nomeRepresentante = campo(representante, [
-            "REPRESENTANTE"
-        ]);
+                            cidade:
+                                cidade,
 
-        await registrarLead({
-            estado: estado,
-            cidade: cidade,
-            consumo: consumo,
-            faixa: "Até 2.000 L/mês",
-            destino: "REPRESENTANTE",
-            atendimento: nomeRepresentante || "Representante FQ4"
-        });
+                            consumo:
+                                consumo,
 
-        mostrarRepresentante(representante, estado, cidade);
-    } else {
-        // Sem revenda local e sem representante estadual.
-        await registrarLead({
-            estado: estado,
-            cidade: cidade,
-            consumo: consumo,
-            faixa: "Até 2.000 L/mês",
-            destino: "MERCADO LIVRE",
-            atendimento: "Sem revenda ou representante cadastrado"
-        });
+                            faixa:
+                                "Até 2.000 L/mês",
 
-        mostrarMercadoLivre();
-    }
-}
+                            destino:
+                                "REVENDA",
 
-return;
+                            atendimento:
+                                nomeRevenda ||
+                                "Revenda FQ4"
+
+                        });
+
+                        mostrarRevendas(
+                            revendas
+                        );
+
+                    }
+
+                    // ------------------------------------------
+                    // 2. SEM REVENDA:
+                    // PROCURA REPRESENTANTE
+                    // ------------------------------------------
+
+                    else {
+
+                        console.log(
+                            "Nenhuma revenda encontrada. Buscando representante..."
+                        );
+
+                        const representantes =
+                            await buscarRepresentante(
+                                estado
+                            );
+
+                        // --------------------------------------
+                        // REPRESENTANTE ENCONTRADO
+                        // --------------------------------------
+
+                        if (
+                            representantes.length > 0
+                        ) {
+
+                            const representante =
+                                representantes[0];
+
+                            const nomeRepresentante =
+                                campo(
+                                    representante,
+                                    [
+                                        "REPRESENTANTE",
+                                        "NOME",
+                                        "NOME DO REPRESENTANTE"
+                                    ]
+                                );
+
+                            await registrarLead({
+
+                                estado:
+                                    estado,
+
+                                cidade:
+                                    cidade,
+
+                                consumo:
+                                    consumo,
+
+                                faixa:
+                                    "Até 2.000 L/mês",
+
+                                destino:
+                                    "REPRESENTANTE",
+
+                                atendimento:
+                                    nomeRepresentante ||
+                                    "Representante FQ4"
+
+                            });
+
+                            mostrarRepresentante(
+                                representante,
+                                estado,
+                                cidade
+                            );
+
+                        }
+
+                        // --------------------------------------
+                        // 3. SEM REVENDA E SEM REPRESENTANTE
+                        // MERCADO LIVRE
+                        // --------------------------------------
+
+                        else {
+
+                            await registrarLead({
+
+                                estado:
+                                    estado,
+
+                                cidade:
+                                    cidade,
+
+                                consumo:
+                                    consumo,
+
+                                faixa:
+                                    "Até 2.000 L/mês",
+
+                                destino:
+                                    "MERCADO LIVRE",
+
+                                atendimento:
+                                    "Sem revenda ou representante cadastrado"
+
+                            });
+
+                            mostrarMercadoLivre();
+
+                        }
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
 // ======================================================
 // INICIALIZAÇÃO
 // ======================================================
 
 carregarEstados();
+
+console.log(
+    "================================="
+);
+
+console.log(
+    "FQ4 - SCRIPT CARREGADO COM SUCESSO"
+);
+
+console.log(
+    "Estados disponíveis:",
+    estados.length
+);
+
+console.log(
+    "================================="
+);
